@@ -75,7 +75,7 @@ local function fetchAll(token, cursor, acc, done)
     if cursor then
         url ..= "&cursor=" .. noctalia.string.urlEncode(cursor)
     end
-    noctalia.http({ url = url, headers = { "Authorization: Bearer " .. token } }, function(res)
+    local started = noctalia.http({ url = url, headers = { "Authorization: Bearer " .. token } }, function(res)
         if res.status ~= 200 then
             done(nil, tr("error.http", { status = res.status or 0 }))
             return
@@ -92,6 +92,10 @@ local function fetchAll(token, cursor, acc, done)
             done(acc)
         end
     end)
+    -- A rejected request never calls back; report it so `fetching` is released.
+    if not started then
+        done(nil, tr("error.http", { status = 0 }))
+    end
 end
 
 local function render()
